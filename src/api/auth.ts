@@ -1,0 +1,133 @@
+import { savePrivateKey, getPrivateKey } from "../db/keyStore";
+import { CryptoService } from "../crypto/e2ee/keyManagement";
+
+export type AuthUser = {
+  id: string;
+  username: string;
+  display_name: string;
+  public_key: string;
+  wrapped_private_key: string;
+  pbkdf2_salt: string;
+  created_at: string;
+};
+
+type AuthResponse = {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: AuthUser;
+};
+
+const BASE_URL = "https://whisperbox.koyeb.app";
+
+export const login = async (payload: {
+  username: string;
+  password: string;
+}): Promise<AuthResponse> => {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Login failed");
+  }
+
+  return res.json();
+};
+export const register = async (payload: {
+  username: string;
+  display_name: string;
+  password: string;
+  public_key: string;
+  wrapped_private_key: string;
+  pbkdf2_salt: string;
+}): Promise<AuthResponse> => {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Registration failed");
+  }
+
+  return res.json();
+};
+export const handleAuthSuccess = async (
+  user: AuthUser,
+  tokens: AuthResponse,
+) => {
+  localStorage.setItem("access_token", tokens.access_token);
+  localStorage.setItem("refresh_token", tokens.refresh_token);
+
+  const existingKey = await getPrivateKey(user.id);
+
+  if (!existingKey) {
+    const keyPair = await CryptoService.generateKeyPair();
+
+    await savePrivateKey(user.id, keyPair.privateKey);
+
+    return {
+      ...tokens,
+      cryptoReady: true,
+    };
+  }
+
+  return {
+    ...tokens,
+    cryptoReady: true,
+  };
+};
+export const getMe = async (token: string): Promise<AuthUser> => {
+  const res = await fetch(`${BASE_URL}/auth/me`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch user");
+  }
+
+  return res.json();
+};
+export const refreshToken = async (refresh_token: string) => {
+  const res = await fetch(`${BASE_URL}/auth/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Token refresh failed");
+  }
+
+  return res.json();
+};
+export const logout = async (token: string, refresh_token: string) => {
+  const res = await fetch(`${BASE_URL}/auth/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Logout failed");
+  }
+
+  return res.json();
+};

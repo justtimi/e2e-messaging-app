@@ -1,17 +1,12 @@
-/* arrayBufferToBase64()
-base64ToArrayBuffer()
-textToArrayBuffer()
-arrayBufferToText() */
-
-export const textToArrayBuffer = (text: string): Uint8Array<ArrayBuffer> => {
+const textToArrayBuffer = (text: string): Uint8Array<ArrayBuffer> => {
   return new TextEncoder().encode(text);
 };
 
-export const arrayBufferToText = (buffer: ArrayBuffer): string => {
+const arrayBufferToText = (buffer: ArrayBuffer): string => {
   return new TextDecoder().decode(buffer);
 };
 
-export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer);
 
   let binary = "";
@@ -22,7 +17,7 @@ export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   return btoa(binary);
 };
 
-export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
   const binary = atob(base64);
 
   const bytes = new Uint8Array(binary.length);
@@ -32,4 +27,11 @@ export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
   }
 
   return bytes.buffer;
+};
+
+export const EncodingService = {
+  base64ToArrayBuffer,
+  arrayBufferToBase64,
+  arrayBufferToText,
+  textToArrayBuffer,
 };
