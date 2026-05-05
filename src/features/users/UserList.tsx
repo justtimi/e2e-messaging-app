@@ -8,21 +8,21 @@ type UserListProps = {
 
 const UserList = ({ users, selectedUserId, onSelect }: UserListProps) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-0">
       {users.map((user) => (
         <button
           key={user.id}
           type="button"
           onClick={() => onSelect(user.id)}
           className={[
-            "flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left transition-all duration-200 ease-out hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-blue-100",
+            "flex w-full items-start gap-3 border-b px-3 py-2 text-left transition-all duration-200 ease-out hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-blue-100",
             user.id === selectedUserId
-              ? "border-gray-300 bg-gray-50"
-              : "border-gray-200 bg-white",
+              ? "border-b-gray-300 bg-gray-50"
+              : "border-b-gray-200 bg-white",
           ].join(" ")}
         >
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 text-sm font-semibold text-white"
             style={{ backgroundColor: user.avatarColor }}
           >
             {user.name.charAt(0)}

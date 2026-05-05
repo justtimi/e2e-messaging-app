@@ -14,19 +14,20 @@ const Chat = () => {
   } = useMessages();
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] px-4 py-8">
-      <div className="mx-auto w-full max-w-3xl space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-            WhisperBox Messenger
-          </h1>
-          <p className="text-sm text-gray-500">
-            Secure, encrypted conversations
-          </p>
-        </div>
-
-        <main className="grid gap-4 md:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="min-h-screen bg-[#F5F5F7]">
+      <div className="flex h-screen">
+        <aside className="w-80 border-r border-gray-200 bg-white">
+          <div className="p-4 border-b border-gray-200">
+            <div className="space-y-2">
+              <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+                WhisperBox Messenger
+              </h1>
+              <p className="text-sm text-gray-500">
+                Secure, encrypted conversations
+              </p>
+            </div>
+          </div>
+          <div className="p-4">
             <div className="mb-4 space-y-1">
               <h2 className="text-sm font-semibold text-gray-900">Contacts</h2>
               <p className="text-xs text-gray-500">Select a user to chat</p>
@@ -36,18 +37,18 @@ const Chat = () => {
               selectedUserId={selectedUser?.id}
               onSelect={selectUser}
             />
-          </aside>
+          </div>
+        </aside>
 
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <ChatWindow
-              selectedUser={selectedUser}
-              conversation={conversation}
-              isLoading={isLoading}
-              currentUserId="u1"
-            />
-            <MessageInput onSend={sendMessage} disabled={!selectedUser} />
-          </section>
-        </main>
+        <section className="flex-1 flex flex-col bg-white">
+          <ChatWindow
+            selectedUser={selectedUser}
+            conversation={conversation}
+            isLoading={isLoading}
+            currentUserId="u1"
+          />
+          <MessageInput onSend={sendMessage} disabled={!selectedUser} />
+        </section>
       </div>
     </div>
   );

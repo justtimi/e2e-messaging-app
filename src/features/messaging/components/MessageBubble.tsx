@@ -8,7 +8,7 @@ const MessageBubble = ({ text, isOwn, time }: MessageBubbleProps) => {
   return (
     <div
       className={[
-        "max-w-[70%] rounded-lg px-3 py-2",
+        "max-w-[25%] rounded-2xl px-4 py-2",
         isOwn
           ? "self-end bg-gray-900 text-white"
           : "self-start bg-gray-100 text-gray-900",
