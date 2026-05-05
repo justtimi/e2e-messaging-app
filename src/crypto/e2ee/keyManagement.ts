@@ -1,9 +1,13 @@
+import { EncodingService } from "../utils/encoding";
+
 const exportPublicKey = async (keyPair: CryptoKeyPair) => {
-  return await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+   const raw = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+  return EncodingService.arrayBufferToBase64(raw);
 };
 
 const exportPrivateKey = async (keyPair: CryptoKeyPair) => {
-  return await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+  const raw = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+  return EncodingService.arrayBufferToBase64(raw);
 };
 
 const generateKeyPair = async () => {
@@ -19,7 +23,8 @@ const generateKeyPair = async () => {
   );
 };
 
-const importPublicKey = async (keyBuffer: ArrayBuffer) => {
+const importPublicKey = async (base64Key: string) => {
+  const keyBuffer = EncodingService.base64ToArrayBuffer(base64Key);
   return await window.crypto.subtle.importKey(
     "spki",
     keyBuffer,
@@ -31,7 +36,8 @@ const importPublicKey = async (keyBuffer: ArrayBuffer) => {
     ["encrypt"],
   );
 };
-const importPrivateKey = async (keyBuffer: ArrayBuffer) => {
+const importPrivateKey = async (base64Key: string) => {
+  const keyBuffer = EncodingService.base64ToArrayBuffer(base64Key);
   return await window.crypto.subtle.importKey(
     "pkcs8",
     keyBuffer,

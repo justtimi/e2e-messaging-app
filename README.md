@@ -223,6 +223,8 @@ You are done when:
 
 ---
 
+turn the full folder structure with all the files in the src folder and put it in a markdown file 
+
 If you want next, I can give you:
 
 👉 Phase 3 (Messaging + Encryption Flow Integration)

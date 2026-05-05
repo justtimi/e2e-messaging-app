@@ -1,6 +1,3 @@
-import { savePrivateKey, getPrivateKey } from "../db/keyStore";
-import { CryptoService } from "../crypto/e2ee/keyManagement";
-
 export type AuthUser = {
   id: string;
   username: string;
@@ -61,31 +58,7 @@ export const register = async (payload: {
 
   return res.json();
 };
-export const handleAuthSuccess = async (
-  user: AuthUser,
-  tokens: AuthResponse,
-) => {
-  localStorage.setItem("access_token", tokens.access_token);
-  localStorage.setItem("refresh_token", tokens.refresh_token);
 
-  const existingKey = await getPrivateKey(user.id);
-
-  if (!existingKey) {
-    const keyPair = await CryptoService.generateKeyPair();
-
-    await savePrivateKey(user.id, keyPair.privateKey);
-
-    return {
-      ...tokens,
-      cryptoReady: true,
-    };
-  }
-
-  return {
-    ...tokens,
-    cryptoReady: true,
-  };
-};
 export const getMe = async (token: string): Promise<AuthUser> => {
   const res = await fetch(`${BASE_URL}/auth/me`, {
     method: "GET",

@@ -26,7 +26,7 @@ const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  return bytes.buffer;
+  return new Uint8Array(bytes).buffer;
 };
 
 export const EncodingService = {
