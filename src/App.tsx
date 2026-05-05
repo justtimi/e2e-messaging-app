@@ -1,10 +1,26 @@
-﻿import Chat from './pages/Chat';
+﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Register";
+import Chat from "./pages/Chat";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
 const App = () => {
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-slate-950 antialiased">
-      <Chat />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
