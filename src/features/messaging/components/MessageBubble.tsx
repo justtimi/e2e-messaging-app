@@ -14,7 +14,7 @@ const MessageBubble = ({ text, isOwn, time }: MessageBubbleProps) => {
           : "self-start bg-gray-100 text-gray-900",
       ].join(" ")}
     >
-      <p className="text-sm leading-5 break-words">{text}</p>
+      <p className="text-sm leading-5 wrap-break-word">{text}</p>
       <span
         className={[
           "mt-1 block text-xs",

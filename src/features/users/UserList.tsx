@@ -7,6 +7,14 @@ type UserListProps = {
 };
 
 const UserList = ({ users, selectedUserId, onSelect }: UserListProps) => {
+  if (users.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+        No users available yet. Try refreshing or creating a new chat.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-0">
       {users.map((user) => (
