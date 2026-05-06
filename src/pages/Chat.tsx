@@ -16,12 +16,17 @@ const Chat = () => {
     conversation,
     isLoading,
     selectUser,
+    addContact,
     sendMessage,
     searchQuery,
     setSearchQuery,
   } = useMessages();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
+  const [newContactId, setNewContactId] = useState("");
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactKey, setNewContactKey] = useState("");
 
   return (
     <div className="min-h-screen bg-[#F5F5F7]">
@@ -29,13 +34,13 @@ const Chat = () => {
         {/* Mobile overlay */}
         {isMobileMenuOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
 
         <aside
-          className={`w-80 border-r border-gray-200 bg-white lg:block ${isMobileMenuOpen ? "fixed inset-y-0 left-0 z-50" : "hidden"}`}
+          className={`w-full md:w-80 lg:w-96 border-r border-gray-200 bg-white ${isMobileMenuOpen ? "fixed inset-y-0 left-0 z-50 md:static" : "hidden md:block"}`}
         >
           <div className="flex items-center justify-between border-b border-gray-200 p-4">
             <div className="space-y-2">
@@ -74,13 +79,22 @@ const Chat = () => {
                 </h2>
                 <p className="text-xs text-gray-500">Select a user to chat</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen((open) => !open)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
-                {isSearchOpen ? "Hide search" : "New chat"}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen((open) => !open)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                >
+                  {isSearchOpen ? "Hide search" : "New chat"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsNewContactOpen((open) => !open)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                >
+                  {isNewContactOpen ? "Cancel" : "Add contact"}
+                </button>
+              </div>
             </div>
             {isSearchOpen && (
               <div className="mb-4">
@@ -92,6 +106,68 @@ const Chat = () => {
                   aria-label="Search users"
                 />
               </div>
+            )}
+            {isNewContactOpen && (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!newContactId || !newContactName || !newContactKey)
+                    return;
+                  addContact({
+                    id: newContactId,
+                    name: newContactName,
+                    status: "online",
+                    lastMessage: "Start a conversation",
+                    avatarColor: "#5B8DEF",
+                    public_key: newContactKey,
+                  });
+                  setNewContactId("");
+                  setNewContactName("");
+                  setNewContactKey("");
+                  setIsNewContactOpen(false);
+                }}
+                className="mb-4 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4"
+              >
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Contact ID
+                  </label>
+                  <Input
+                    placeholder="Enter user ID"
+                    value={newContactId}
+                    onChange={(event) => setNewContactId(event.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Display name
+                  </label>
+                  <Input
+                    placeholder="Enter display name"
+                    value={newContactName}
+                    onChange={(event) => setNewContactName(event.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Public key
+                  </label>
+                  <Input
+                    placeholder="Paste public key"
+                    value={newContactKey}
+                    onChange={(event) => setNewContactKey(event.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  Save contact
+                </button>
+              </form>
             )}
             <UserList
               users={users}
@@ -110,8 +186,9 @@ const Chat = () => {
               <MobileMenuButton
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 isOpen={isMobileMenuOpen}
+                className="md:hidden"
               />
-              <h1 className="text-lg font-semibold text-gray-900 lg:hidden">
+              <h1 className="text-lg font-semibold text-gray-900 md:hidden">
                 WhisperBox
               </h1>
             </div>

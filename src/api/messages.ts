@@ -35,12 +35,21 @@ export const sendMessage = async (
 
 export const getMessages = async (token: string): Promise<Message[]> => {
   const res = await fetch(`${BASE_URL}/messages`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  if (!res.ok) throw new Error("Failed to fetch messages");
+  if (!res.ok) {
+    if (res.status === 405) {
+      console.warn(
+        "Message list endpoint does not support GET, falling back to local history.",
+      );
+      return [];
+    }
+    throw new Error("Failed to fetch messages");
+  }
 
   return res.json();
 };

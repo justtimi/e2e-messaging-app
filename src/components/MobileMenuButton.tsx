@@ -1,13 +1,18 @@
 type MobileMenuButtonProps = {
   onClick: () => void;
   isOpen: boolean;
+  className?: string;
 };
 
-const MobileMenuButton = ({ onClick, isOpen }: MobileMenuButtonProps) => {
+const MobileMenuButton = ({
+  onClick,
+  isOpen,
+  className,
+}: MobileMenuButtonProps) => {
   return (
     <button
       onClick={onClick}
-      className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 lg:hidden"
+      className={`rounded-lg p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 md:hidden ${className ?? ""}`}
       aria-label="Toggle menu"
     >
       <svg

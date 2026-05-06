@@ -6,6 +6,10 @@ import { CryptoService } from "../../../crypto/e2ee/keyManagement";
 import type { ChatMessage, ChatUser } from "../../../types/types";
 import type { AuthUser } from "../../../api/auth";
 
+type ContactWithKey = ChatUser & {
+  public_key: string;
+};
+
 const initialMessages: ChatMessage[] = [];
 
 const getAvatarColor = (username: string): string => {
@@ -38,6 +42,7 @@ export const useMessages = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [authUsers, setAuthUsers] = useState<AuthUser[]>([]);
+  const [customContacts, setCustomContacts] = useState<ContactWithKey[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,11 +74,20 @@ export const useMessages = () => {
     fetchUsers();
   }, [accessToken, currentUser]);
 
-  const users = useMemo(() => {
-    return authUsers
+  const users = useMemo<ContactWithKey[]>(() => {
+    const authContacts = authUsers
       .filter((user) => user.id !== currentUser?.id)
-      .map((user) => convertAuthUserToChatUser(user));
-  }, [authUsers, currentUser]);
+      .map((user) => ({
+        id: user.id,
+        name: user.display_name || user.username,
+        status: "online" as const,
+        lastMessage: "Start a conversation",
+        avatarColor: getAvatarColor(user.username),
+        public_key: user.public_key,
+      }));
+
+    return [...authContacts, ...customContacts];
+  }, [authUsers, customContacts, currentUser]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) =>
@@ -105,6 +119,14 @@ export const useMessages = () => {
 
   const selectUser = (userId: string) => {
     setSelectedUserId(userId);
+  };
+
+  const addContact = (contact: ContactWithKey) => {
+    setCustomContacts((prev) => {
+      if (prev.some((item) => item.id === contact.id)) return prev;
+      return [...prev, contact];
+    });
+    setSelectedUserId(contact.id);
   };
 
   const loadMessages = async () => {
@@ -141,15 +163,15 @@ export const useMessages = () => {
   const sendMessage = async (text: string) => {
     if (!selectedUser || !currentUser || !accessToken || !privateKey) return;
 
-    const recipientAuth = authUsers.find((user) => user.id === selectedUser.id);
-    if (!recipientAuth) return;
+    const recipientKey = selectedUser.public_key;
+    if (!recipientKey) return;
 
     try {
       const senderPublicKey = await CryptoService.importPublicKey(
         currentUser.public_key,
       );
       const receiverPublicKey = await CryptoService.importPublicKey(
-        recipientAuth.public_key,
+        recipientKey,
       );
 
       await MessageService.send({
@@ -180,6 +202,7 @@ export const useMessages = () => {
     conversation,
     isLoading,
     selectUser,
+    addContact,
     sendMessage,
     searchQuery,
     setSearchQuery,

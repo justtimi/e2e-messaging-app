@@ -73,6 +73,12 @@ export const getUsers = async (token: string): Promise<AuthUser[]> => {
   });
 
   if (!res.ok) {
+    if (res.status === 404) {
+      console.warn(
+        "User listing endpoint not available. Falling back to manual contact management.",
+      );
+      return [];
+    }
     throw new Error("Failed to fetch users");
   }
 
