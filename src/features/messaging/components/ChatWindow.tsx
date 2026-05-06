@@ -18,13 +18,31 @@ const ChatWindow = ({
   if (!selectedUser) {
     return (
       <div className="flex flex-1 items-center justify-center p-6 text-center">
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Select a contact to start
-          </h2>
-          <p className="text-sm text-gray-500">
-            Messages are encrypted end-to-end
-          </p>
+        <div className="max-w-md space-y-4">
+          <div className="mx-auto h-16 w-16 rounded-full bg-blue-100 p-4">
+            <svg
+              className="h-8 w-8 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Select a conversation
+            </h2>
+            <p className="text-sm text-gray-500">
+              Choose a contact from the sidebar to start a secure, end-to-end
+              encrypted conversation.
+            </p>
+          </div>
         </div>
       </div>
     );

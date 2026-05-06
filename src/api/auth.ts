@@ -64,6 +64,21 @@ export const register = async (payload: {
   return res.json();
 };
 
+export const getUsers = async (token: string): Promise<AuthUser[]> => {
+  const res = await fetch(`${BASE_URL}/auth/users`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch users");
+  }
+
+  return res.json();
+};
+
 export const getMe = async (token: string): Promise<AuthUser> => {
   const res = await fetch(`${BASE_URL}/auth/me`, {
     method: "GET",

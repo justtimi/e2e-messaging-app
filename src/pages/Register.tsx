@@ -6,17 +6,48 @@ import Button from "../components/Button";
 import { CryptoService } from "../crypto/e2ee/keyManagement";
 import { EncodingService } from "../crypto/utils/encoding";
 import { KeyWrappingService } from "../crypto/utils/keyWrapping";
+import { useToast } from "../components/Toast";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters";
+    }
+
+    if (!displayName.trim()) {
+      newErrors.displayName = "Display name is required";
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -47,16 +78,17 @@ const Signup = () => {
         public_key: publicKey,
         wrapped_private_key:
           EncodingService.arrayBufferToBase64(wrappedPrivateKey),
-        pbkdf2_salt: salt.toString(),
+        pbkdf2_salt: EncodingService.arrayBufferToBase64(salt.buffer),
       };
 
       await register(payload);
 
-      // Skip auto-login for now due to crypto issues
+      addToast("success", "Account created successfully! Please log in.");
       navigate("/login");
     } catch (err) {
       console.error("Signup failed:", err);
-      alert(
+      addToast(
+        "error",
         `Signup failed: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
     } finally {
@@ -65,35 +97,78 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <form
         onSubmit={handleSignup}
-        className="w-full max-w-sm space-y-4 rounded-xl border bg-white p-6"
+        className="w-full max-w-sm space-y-4 rounded-xl border bg-white p-6 shadow-sm"
       >
-        <h1 className="text-xl font-semibold">Create Account</h1>
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Create Account
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Join WhisperBox for secure messaging
+          </p>
+        </div>
 
-        <Input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <div className="space-y-1">
+          <Input
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            aria-label="Username"
+            aria-describedby={errors.username ? "username-error" : undefined}
+          />
+          {errors.username && (
+            <p id="username-error" className="text-sm text-red-600">
+              {errors.username}
+            </p>
+          )}
+        </div>
 
-        <Input
-          placeholder="Display Name"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-        />
+        <div className="space-y-1">
+          <Input
+            placeholder="Display Name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            aria-label="Display Name"
+            aria-describedby={
+              errors.displayName ? "displayName-error" : undefined
+            }
+          />
+          {errors.displayName && (
+            <p id="displayName-error" className="text-sm text-red-600">
+              {errors.displayName}
+            </p>
+          )}
+        </div>
 
-        <Input
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="space-y-1">
+          <Input
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-label="Password"
+            aria-describedby={errors.password ? "password-error" : undefined}
+          />
+          {errors.password && (
+            <p id="password-error" className="text-sm text-red-600">
+              {errors.password}
+            </p>
+          )}
+        </div>
 
         <Button disabled={loading} className="w-full">
-          {loading ? "Creating..." : "Sign Up"}
+          {loading ? "Creating Account..." : "Sign Up"}
         </Button>
+
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <a href="/login" className="text-blue-600 hover:text-blue-500">
+            Sign in
+          </a>
+        </p>
       </form>
     </div>
   );

@@ -78,35 +78,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!storedPrivateKey) {
       try {
-        console.log("🔐 Unwrapping private key for user:", user.username);
-        console.log("Salt from backend:", user.pbkdf2_salt);
-        console.log("Wrapped key from backend:", user.wrapped_private_key);
-
         const saltBuffer = EncodingService.base64ToArrayBuffer(
           user.pbkdf2_salt,
         );
 
-        console.log("Parsed salt buffer length:", saltBuffer.byteLength);
-
         const wrappedKeyBuffer = EncodingService.base64ToArrayBuffer(
           user.wrapped_private_key,
         );
-
-        console.log("Wrapped key buffer length:", wrappedKeyBuffer.byteLength);
 
         const wrappingKey = await KeyWrappingService.deriveWrappingKey(
           password,
           saltBuffer,
         );
 
-        console.log("Wrapping key derived successfully");
-
         storedPrivateKey = await KeyWrappingService.unwrapPrivateKey(
           wrappedKeyBuffer,
           wrappingKey,
         );
-
-        console.log("Private key unwrapped successfully");
 
         await savePrivateKey(user.id, storedPrivateKey);
       } catch (err) {

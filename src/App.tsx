@@ -3,24 +3,29 @@ import Login from "./pages/Login";
 import Signup from "./pages/Register";
 import Chat from "./pages/Chat";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import { ToastProvider } from "./components/Toast";
+import ToastContainer from "./components/ToastContainer";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        <Route
-          path="/chat"
-          element={
-            <ProtectedRoute>
-              <Chat />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <ToastContainer />
+      </BrowserRouter>
+    </ToastProvider>
   );
 };
 

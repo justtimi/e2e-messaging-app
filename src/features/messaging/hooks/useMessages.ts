@@ -1,96 +1,76 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
+import { useAuthContext } from "../../../auth/AuthContext";
+import { getUsers } from "../../../api/auth";
 import type { ChatMessage, ChatUser } from "../../../types/types";
+import type { AuthUser } from "../../../api/auth";
 
-const CURRENT_USER_ID = "u1";
+const initialMessages: ChatMessage[] = [];
 
-const initialUsers: ChatUser[] = [
-  {
-    id: "u2",
-    name: "Mia Thompson",
-    status: "online",
-    lastMessage: "I sent the new encryption keys.",
-    avatarColor: "#5B8DEF",
-  },
-  {
-    id: "u3",
-    name: "Noah Patel",
-    status: "offline",
-    lastMessage: "We can review the notebook after lunch.",
-    avatarColor: "#F47C7C",
-  },
-  {
-    id: "u4",
-    name: "Ava Carter",
-    status: "online",
-    lastMessage: "I updated the group chat design.",
-    avatarColor: "#6FCF97",
-  },
-];
+const getAvatarColor = (username: string): string => {
+  const colors = [
+    "#5B8DEF",
+    "#F47C7C",
+    "#6FCF97",
+    "#F2C94C",
+    "#9B51E0",
+    "#56CCF2",
+  ];
+  const index =
+    username.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+    colors.length;
+  return colors[index];
+};
 
-const initialMessages: ChatMessage[] = [
-  {
-    id: "m1",
-    senderId: "u2",
-    receiverId: CURRENT_USER_ID,
-    text: "Hi there! I just finished the new key exchange flow.",
-    createdAt: "2026-05-05T09:20:00.000Z",
-  },
-  {
-    id: "m2",
-    senderId: CURRENT_USER_ID,
-    receiverId: "u2",
-    text: "Perfect, I will test it now and share feedback.",
-    createdAt: "2026-05-05T09:22:00.000Z",
-  },
-  {
-    id: "m3",
-    senderId: "u3",
-    receiverId: CURRENT_USER_ID,
-    text: "Can we sync on the private group feature later?",
-    createdAt: "2026-05-04T16:40:00.000Z",
-  },
-  {
-    id: "m4",
-    senderId: CURRENT_USER_ID,
-    receiverId: "u4",
-    text: "Your layout ideas look great. I like the muted gradients.",
-    createdAt: "2026-05-05T08:15:00.000Z",
-  },
-];
+const convertAuthUserToChatUser = (authUser: AuthUser): ChatUser => {
+  return {
+    id: authUser.id,
+    name: authUser.display_name || authUser.username,
+    status: "online" as const, // For now, assume all users are online
+    lastMessage: "Start a conversation",
+    avatarColor: getAvatarColor(authUser.username),
+  };
+};
 
 export const useMessages = () => {
+  const { user: currentUser, accessToken } = useAuthContext();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const [selectedUserId, setSelectedUserId] = useState<string>(
-    initialUsers[0].id,
-  );
-  const [isLoading] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [users, setUsers] = useState<ChatUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!accessToken || !currentUser) return;
+
+      try {
+        setIsLoading(true);
+        const authUsers = await getUsers(accessToken);
+
+        // Filter out current user and convert to ChatUser format
+        const chatUsers = authUsers
+          .filter((user) => user.id !== currentUser.id)
+          .map((user) => convertAuthUserToChatUser(user));
+
+        setUsers(chatUsers);
+
+        // Select first user if available
+        if (chatUsers.length > 0 && !selectedUserId) {
+          setSelectedUserId(chatUsers[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [accessToken, currentUser]);
 
   const selectedUser = useMemo(
-    () => initialUsers.find((user) => user.id === selectedUserId) ?? null,
-    [selectedUserId],
-  );
-
-  const users = useMemo(
-    () =>
-      initialUsers.map((user) => {
-        const conversation = messages.filter(
-          (message) =>
-            (message.senderId === user.id &&
-              message.receiverId === CURRENT_USER_ID) ||
-            (message.senderId === CURRENT_USER_ID &&
-              message.receiverId === user.id),
-        );
-
-        const lastMessage = conversation.length
-          ? conversation[conversation.length - 1].text
-          : user.lastMessage;
-
-        return {
-          ...user,
-          lastMessage,
-        };
-      }),
-    [messages],
+    () => users.find((user) => user.id === selectedUserId) ?? null,
+    [users, selectedUserId],
   );
 
   const conversation = useMemo(
@@ -98,34 +78,34 @@ export const useMessages = () => {
       messages
         .filter(
           (message) =>
-            (message.senderId === CURRENT_USER_ID &&
-              message.receiverId === selectedUserId) ||
             (message.senderId === selectedUserId &&
-              message.receiverId === CURRENT_USER_ID),
+              message.receiverId === currentUser?.id) ||
+            (message.senderId === currentUser?.id &&
+              message.receiverId === selectedUserId),
         )
         .sort(
           (a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         ),
-    [messages, selectedUserId],
+    [messages, selectedUserId, currentUser?.id],
   );
 
-  const selectUser = (id: string) => {
-    setSelectedUserId(id);
+  const selectUser = (userId: string) => {
+    setSelectedUserId(userId);
   };
 
   const sendMessage = (text: string) => {
-    if (!selectedUserId || !text.trim()) return;
+    if (!selectedUser || !currentUser) return;
 
-    const nextMessage: ChatMessage = {
-      id: "m-" + Date.now(),
-      senderId: CURRENT_USER_ID,
-      receiverId: selectedUserId,
-      text: text.trim(),
+    const newMessage: ChatMessage = {
+      id: `m${Date.now()}`,
+      senderId: currentUser.id,
+      receiverId: selectedUser.id,
+      text,
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((current) => [...current, nextMessage]);
+    setMessages((prev) => [...prev, newMessage]);
   };
 
   return {
