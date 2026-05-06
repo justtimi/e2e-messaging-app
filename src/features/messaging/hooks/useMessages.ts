@@ -1,6 +1,8 @@
 ﻿import { useMemo, useState, useEffect } from "react";
 import { useAuthContext } from "../../../auth/AuthContext";
 import { getUsers } from "../../../api/auth";
+import { MessageService } from "../services/messagingService";
+import { CryptoService } from "../../../crypto/e2ee/keyManagement";
 import type { ChatMessage, ChatUser } from "../../../types/types";
 import type { AuthUser } from "../../../api/auth";
 
@@ -32,10 +34,11 @@ const convertAuthUserToChatUser = (authUser: AuthUser): ChatUser => {
 };
 
 export const useMessages = () => {
-  const { user: currentUser, accessToken } = useAuthContext();
+  const { user: currentUser, accessToken, privateKey } = useAuthContext();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [users, setUsers] = useState<ChatUser[]>([]);
+  const [authUsers, setAuthUsers] = useState<AuthUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch users from API
@@ -46,13 +49,11 @@ export const useMessages = () => {
       try {
         setIsLoading(true);
         const authUsers = await getUsers(accessToken);
+        setAuthUsers(authUsers);
 
-        // Filter out current user and convert to ChatUser format
         const chatUsers = authUsers
           .filter((user) => user.id !== currentUser.id)
           .map((user) => convertAuthUserToChatUser(user));
-
-        setUsers(chatUsers);
 
         // Select first user if available
         if (chatUsers.length > 0 && !selectedUserId) {
@@ -68,9 +69,21 @@ export const useMessages = () => {
     fetchUsers();
   }, [accessToken, currentUser]);
 
+  const users = useMemo(() => {
+    return authUsers
+      .filter((user) => user.id !== currentUser?.id)
+      .map((user) => convertAuthUserToChatUser(user));
+  }, [authUsers, currentUser]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [users, searchQuery]);
+
   const selectedUser = useMemo(
-    () => users.find((user) => user.id === selectedUserId) ?? null,
-    [users, selectedUserId],
+    () => filteredUsers.find((user) => user.id === selectedUserId) ?? null,
+    [filteredUsers, selectedUserId],
   );
 
   const conversation = useMemo(
@@ -94,26 +107,82 @@ export const useMessages = () => {
     setSelectedUserId(userId);
   };
 
-  const sendMessage = (text: string) => {
-    if (!selectedUser || !currentUser) return;
+  const loadMessages = async () => {
+    if (!accessToken || !currentUser || !privateKey) return;
+    setIsLoading(true);
 
-    const newMessage: ChatMessage = {
-      id: `m${Date.now()}`,
-      senderId: currentUser.id,
-      receiverId: selectedUser.id,
-      text,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const decryptedMessages = await MessageService.loadAndDecryptMessages(
+        currentUser.id,
+        accessToken,
+        privateKey,
+      );
 
-    setMessages((prev) => [...prev, newMessage]);
+      setMessages(
+        decryptedMessages.map((msg) => ({
+          id: msg.id,
+          senderId: msg.sender_id,
+          receiverId: msg.receiver_id,
+          text: msg.text,
+          createdAt: msg.created_at,
+        })),
+      );
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMessages();
+  }, [accessToken, currentUser, privateKey]);
+
+  const sendMessage = async (text: string) => {
+    if (!selectedUser || !currentUser || !accessToken || !privateKey) return;
+
+    const recipientAuth = authUsers.find((user) => user.id === selectedUser.id);
+    if (!recipientAuth) return;
+
+    try {
+      const senderPublicKey = await CryptoService.importPublicKey(
+        currentUser.public_key,
+      );
+      const receiverPublicKey = await CryptoService.importPublicKey(
+        recipientAuth.public_key,
+      );
+
+      await MessageService.send({
+        text,
+        receiverPublicKey,
+        senderPublicKey,
+        receiverId: selectedUser.id,
+        token: accessToken,
+      });
+
+      const newMessage: ChatMessage = {
+        id: `m${Date.now()}`,
+        senderId: currentUser.id,
+        receiverId: selectedUser.id,
+        text,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   return {
-    users,
+    users: filteredUsers,
     selectedUser,
     conversation,
     isLoading,
     selectUser,
     sendMessage,
+    searchQuery,
+    setSearchQuery,
+    loadMessages,
   };
 };

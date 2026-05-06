@@ -1,6 +1,7 @@
 ﻿import ChatWindow from "../features/messaging/components/ChatWindow";
 import MessageInput from "../features/messaging/components/MessageInput";
 import UserList from "../features/users/UserList";
+import Input from "../components/Input";
 import { useMessages } from "../features/messaging/hooks/useMessages";
 import { useAuthContext } from "../auth/AuthContext";
 import SettingsDropdown from "../components/SettingsDropdown";
@@ -16,8 +17,11 @@ const Chat = () => {
     isLoading,
     selectUser,
     sendMessage,
+    searchQuery,
+    setSearchQuery,
   } = useMessages();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F5F5F7]">
@@ -63,10 +67,32 @@ const Chat = () => {
             </button>
           </div>
           <div className="p-4">
-            <div className="mb-4 space-y-1">
-              <h2 className="text-sm font-semibold text-gray-900">Contacts</h2>
-              <p className="text-xs text-gray-500">Select a user to chat</p>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Contacts
+                </h2>
+                <p className="text-xs text-gray-500">Select a user to chat</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen((open) => !open)}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                {isSearchOpen ? "Hide search" : "New chat"}
+              </button>
             </div>
+            {isSearchOpen && (
+              <div className="mb-4">
+                <Input
+                  placeholder="Search users to chat"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="w-full"
+                  aria-label="Search users"
+                />
+              </div>
+            )}
             <UserList
               users={users}
               selectedUserId={selectedUser?.id}

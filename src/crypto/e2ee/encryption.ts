@@ -15,11 +15,9 @@ const encryptMessage = async (text: string, derivedKey: CryptoKey) => {
   const base64Ciphertext = EncodingService.arrayBufferToBase64(encryptedData);
 
   return JSON.stringify({
-iv: EncodingService.arrayBufferToBase64(
-  iv.slice().buffer
-),
-  ciphertext: base64Ciphertext,
-});
+    iv: EncodingService.arrayBufferToBase64(iv.slice().buffer),
+    ciphertext: base64Ciphertext,
+  });
 };
 
 const decryptMessage = async (messageJSON: string, derivedKey: CryptoKey) => {
@@ -28,7 +26,7 @@ const decryptMessage = async (messageJSON: string, derivedKey: CryptoKey) => {
     if (
       !message ||
       typeof message !== "object" ||
-      !Array.isArray(message.iv) ||
+      typeof message.iv !== "string" ||
       typeof message.ciphertext !== "string"
     ) {
       throw new Error("Invalid encrypted payload");

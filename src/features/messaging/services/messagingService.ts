@@ -57,8 +57,12 @@ export const MessageService = {
   ): Promise<(MessageDTO & { text: string })[]> {
     const messages = await getMessages(token);
 
+    const relevantMessages = messages.filter(
+      (msg) => msg.sender_id === userId || msg.receiver_id === userId,
+    );
+
     const decrypted = await Promise.all(
-      messages.map(async (msg) => {
+      relevantMessages.map(async (msg) => {
         const isSender = msg.sender_id === userId;
         const encryptedKeyBuffer = EncodingService.base64ToArrayBuffer(
           isSender ? msg.encrypted_key_for_self : msg.encrypted_key,
