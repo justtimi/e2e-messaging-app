@@ -31,7 +31,10 @@ export const login = async (payload: {
   });
 
   if (!res.ok) {
-    throw new Error("Login failed");
+    const errorText = await res.text();
+    throw new Error(
+      `Login failed: ${res.status} ${res.statusText} - ${errorText}`,
+    );
   }
 
   return res.json();
@@ -53,7 +56,9 @@ export const register = async (payload: {
   });
 
   if (!res.ok) {
-    throw new Error("Registration failed");
+    const errorText = await res.text();
+    console.error("Backend error:", errorText);
+    throw new Error(errorText || "Registration failed");
   }
 
   return res.json();

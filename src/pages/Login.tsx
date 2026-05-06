@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../auth/AuthContext";
 import Input from "../components/Input";
 import Button from "../components/Button";
@@ -54,6 +54,13 @@ const Login = () => {
         <Button disabled={loading || authLoading} className="w-full">
           {loading ? "Logging in..." : "Login"}
         </Button>
+
+        <p className="text-center text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <Link to="/signup" className="text-blue-600 underline">
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );
