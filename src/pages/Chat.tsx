@@ -15,6 +15,7 @@ const Chat = () => {
     selectedUser,
     conversation,
     isLoading,
+    isSearchingUsers,
     selectUser,
     addContact,
     sendMessage,
@@ -29,8 +30,8 @@ const Chat = () => {
   const [newContactKey, setNewContactKey] = useState("");
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="flex h-screen">
+    <div className="h-dvh overflow-hidden bg-[#F5F5F7] dark:bg-gray-950">
+      <div className="flex h-full min-h-0">
         {/* Mobile overlay */}
         {isMobileMenuOpen && (
           <div
@@ -40,20 +41,20 @@ const Chat = () => {
         )}
 
         <aside
-          className={`w-full md:w-80 lg:w-96 border-r border-gray-200 bg-white ${isMobileMenuOpen ? "fixed inset-y-0 left-0 z-50 md:static" : "hidden md:block"}`}
+          className={`h-dvh w-full border-r border-gray-200 bg-white md:w-80 lg:w-96 dark:border-gray-800 dark:bg-gray-950 ${isMobileMenuOpen ? "fixed inset-y-0 left-0 z-50 flex flex-col md:static" : "hidden md:flex md:flex-col"}`}
         >
-          <div className="flex items-center justify-between border-b border-gray-200 p-4">
+          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
             <div className="space-y-2">
-              <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+              <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
                 WhisperBox Messenger
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Secure, encrypted conversations
               </p>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden dark:text-gray-300 dark:hover:bg-gray-900"
               aria-label="Close menu"
             >
               <svg
@@ -71,26 +72,28 @@ const Chat = () => {
               </svg>
             </button>
           </div>
-          <div className="p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   Contacts
                 </h2>
-                <p className="text-xs text-gray-500">Select a user to chat</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Select a user to chat
+                </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsSearchOpen((open) => !open)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                  className="min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   {isSearchOpen ? "Hide search" : "New chat"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsNewContactOpen((open) => !open)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+                  className="min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   {isNewContactOpen ? "Cancel" : "Add contact"}
                 </button>
@@ -126,10 +129,10 @@ const Chat = () => {
                   setNewContactKey("");
                   setIsNewContactOpen(false);
                 }}
-                className="mb-4 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4"
+                className="mb-4 space-y-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900"
               >
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
                     Contact ID
                   </label>
                   <Input
@@ -140,7 +143,7 @@ const Chat = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
                     Display name
                   </label>
                   <Input
@@ -151,7 +154,7 @@ const Chat = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
                     Public key
                   </label>
                   <Input
@@ -163,7 +166,7 @@ const Chat = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black dark:bg-gray-100 dark:text-gray-950 dark:hover:bg-white"
                 >
                   Save contact
                 </button>
@@ -172,23 +175,32 @@ const Chat = () => {
             <UserList
               users={users}
               selectedUserId={selectedUser?.id}
+              emptyMessage={
+                isSearchingUsers
+                  ? "Searching users..."
+                  : searchQuery.trim()
+                    ? "No users match your search."
+                    : "No users available yet. Try refreshing or creating a new chat."
+              }
               onSelect={(userId) => {
                 selectUser(userId);
+                setSearchQuery("");
                 setIsMobileMenuOpen(false); // Close mobile menu after selection
+                setIsSearchOpen(false);
               }}
             />
           </div>
         </aside>
 
-        <section className="flex-1 flex flex-col bg-white">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-white dark:bg-gray-950">
+          <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
             <div className="flex items-center gap-3">
               <MobileMenuButton
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 isOpen={isMobileMenuOpen}
                 className="md:hidden"
               />
-              <h1 className="text-lg font-semibold text-gray-900 md:hidden">
+              <h1 className="text-lg font-semibold text-gray-900 md:hidden dark:text-gray-100">
                 WhisperBox
               </h1>
             </div>
@@ -196,6 +208,7 @@ const Chat = () => {
               userName={
                 currentUser?.display_name || currentUser?.username || "User"
               }
+              publicKey={currentUser?.public_key}
             />
           </div>
 

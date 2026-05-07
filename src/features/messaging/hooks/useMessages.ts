@@ -1,13 +1,24 @@
-﻿import { useMemo, useState, useEffect } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthContext } from "../../../auth/AuthContext";
 import { getUsers } from "../../../api/auth";
+import { getUserPublicKey, searchUsers } from "../../../api/users";
 import { MessageService } from "../services/messagingService";
 import { CryptoService } from "../../../crypto/e2ee/keyManagement";
 import type { ChatMessage, ChatUser } from "../../../types/types";
 import type { AuthUser } from "../../../api/auth";
+import { EncodingService } from "../../../crypto/utils/encoding";
+import {
+  decryptReceivedMessage,
+  prepareEncryptedMessage,
+} from "../../../crypto/e2ee/messageCrypto";
+import { WhisperSocket } from "../../../api/client";
 
 type ContactWithKey = ChatUser & {
   public_key: string;
+};
+
+type SearchResultUser = ChatUser & {
+  public_key?: string;
 };
 
 const initialMessages: ChatMessage[] = [];
@@ -43,8 +54,11 @@ export const useMessages = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [authUsers, setAuthUsers] = useState<AuthUser[]>([]);
   const [customContacts, setCustomContacts] = useState<ContactWithKey[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResultUser[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const socketRef = useRef<WhisperSocket | null>(null);
 
   // Fetch users from API
   useEffect(() => {
@@ -72,9 +86,54 @@ export const useMessages = () => {
     };
 
     fetchUsers();
-  }, [accessToken, currentUser]);
+  }, [accessToken, currentUser, selectedUserId]);
 
-  const users = useMemo<ContactWithKey[]>(() => {
+  useEffect(() => {
+    if (!accessToken || !currentUser || !privateKey) return;
+
+    const socket = new WhisperSocket(accessToken, async (incoming) => {
+      const isSender = incoming.sender_id === currentUser.id;
+
+      const encryptedKey = isSender
+        ? incoming.encrypted_key_for_self
+        : incoming.encrypted_key;
+
+      const keyBuffer = EncodingService.base64ToArrayBuffer(encryptedKey);
+
+      const text = await decryptReceivedMessage(
+        incoming.ciphertext,
+        incoming.iv,
+        keyBuffer,
+        privateKey,
+      );
+
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === incoming.id);
+        if (exists) return prev;
+
+        return [
+          ...prev,
+          {
+            id: incoming.id,
+            senderId: incoming.sender_id,
+            receiverId: incoming.receiver_id,
+            text,
+            createdAt: incoming.created_at,
+          },
+        ];
+      });
+    });
+
+    socketRef.current = socket;
+    socket.connect();
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [accessToken, currentUser, privateKey]);
+
+  const contactUsers = useMemo<ContactWithKey[]>(() => {
     const authContacts = authUsers
       .filter((user) => user.id !== currentUser?.id)
       .map((user) => ({
@@ -89,15 +148,84 @@ export const useMessages = () => {
     return [...authContacts, ...customContacts];
   }, [authUsers, customContacts, currentUser]);
 
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (!accessToken || !currentUser || trimmedQuery.length < 2) {
+      const timeoutId = window.setTimeout(() => {
+        setSearchResults([]);
+        setIsSearchingUsers(false);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    let isCurrent = true;
+
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearchingUsers(true);
+
+      try {
+        const results = await searchUsers(trimmedQuery, accessToken);
+
+        if (!isCurrent) return;
+
+        setSearchResults(
+          results
+            .filter((user) => user.id !== currentUser.id)
+            .map((user) => {
+              const existingContact = contactUsers.find(
+                (contact) => contact.id === user.id,
+              );
+
+              return (
+                existingContact ?? {
+                  id: user.id,
+                  name: user.display_name || user.username,
+                  status: "online",
+                  lastMessage: "Start a conversation",
+                  avatarColor: getAvatarColor(user.username),
+                }
+              );
+            }),
+        );
+      } catch (error) {
+        console.error("Failed to search users:", error);
+        if (isCurrent) setSearchResults([]);
+      } finally {
+        if (isCurrent) setIsSearchingUsers(false);
+      }
+    }, 300);
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [accessToken, contactUsers, currentUser, searchQuery]);
+
   const filteredUsers = useMemo(() => {
-    return users.filter((user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    if (!trimmedQuery) return contactUsers;
+
+    const localMatches = contactUsers.filter((user) =>
+      user.name.toLowerCase().includes(trimmedQuery),
     );
-  }, [users, searchQuery]);
+    const localIds = new Set(localMatches.map((user) => user.id));
+    const remoteMatches = searchResults.filter(
+      (user) => !localIds.has(user.id),
+    );
+
+    return [...localMatches, ...remoteMatches];
+  }, [contactUsers, searchQuery, searchResults]);
+
+  const selectableUsers = useMemo(
+    () => [...contactUsers, ...searchResults],
+    [contactUsers, searchResults],
+  );
 
   const selectedUser = useMemo(
-    () => filteredUsers.find((user) => user.id === selectedUserId) ?? null,
-    [filteredUsers, selectedUserId],
+    () => selectableUsers.find((user) => user.id === selectedUserId) ?? null,
+    [selectableUsers, selectedUserId],
   );
 
   const conversation = useMemo(
@@ -117,7 +245,37 @@ export const useMessages = () => {
     [messages, selectedUserId, currentUser?.id],
   );
 
-  const selectUser = (userId: string) => {
+  const selectUser = async (userId: string) => {
+    const existingContact = contactUsers.find((user) => user.id === userId);
+    if (existingContact) {
+      setSelectedUserId(userId);
+      return;
+    }
+
+    const searchedUser = searchResults.find((user) => user.id === userId);
+    if (!searchedUser || !accessToken) return;
+
+    try {
+      const { public_key } = searchedUser.public_key
+        ? { public_key: searchedUser.public_key }
+        : await getUserPublicKey(userId, accessToken);
+
+      setCustomContacts((prev) => {
+        if (prev.some((item) => item.id === userId)) return prev;
+
+        return [
+          ...prev,
+          {
+            ...searchedUser,
+            public_key,
+          },
+        ];
+      });
+    } catch (error) {
+      console.error("Failed to prepare selected user:", error);
+      return;
+    }
+
     setSelectedUserId(userId);
   };
 
@@ -129,68 +287,99 @@ export const useMessages = () => {
     setSelectedUserId(contact.id);
   };
 
-  const loadMessages = async () => {
-    if (!accessToken || !currentUser || !privateKey) return;
-    setIsLoading(true);
+  const loadMessages = useCallback(async () => {
+    if (!accessToken || !currentUser || !privateKey || !selectedUserId) return;
 
     try {
       const decryptedMessages = await MessageService.loadAndDecryptMessages(
-        currentUser.id,
+        selectedUserId,
         accessToken,
         privateKey,
+        currentUser.id,
       );
 
-      setMessages(
-        decryptedMessages.map((msg) => ({
-          id: msg.id,
-          senderId: msg.sender_id,
-          receiverId: msg.receiver_id,
-          text: msg.text,
-          createdAt: msg.created_at,
-        })),
-      );
+      // Only update if there are messages from the server
+      if (decryptedMessages.length > 0) {
+        setMessages(
+          decryptedMessages.map((msg) => ({
+            id: msg.id,
+            senderId: msg.sender_id,
+            receiverId: msg.receiver_id,
+            text: msg.text,
+            createdAt: msg.created_at,
+          })),
+        );
+      }
+      // If no messages from server (405 fallback), keep local messages intact
     } catch (error) {
       console.error("Failed to load messages:", error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [accessToken, currentUser, privateKey, selectedUserId]);
 
   useEffect(() => {
-    loadMessages();
-  }, [accessToken, currentUser, privateKey]);
+    const timeoutId = window.setTimeout(() => {
+      void loadMessages();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadMessages]);
 
   const sendMessage = async (text: string) => {
     if (!selectedUser || !currentUser || !accessToken || !privateKey) return;
 
     const recipientKey = selectedUser.public_key;
-    if (!recipientKey) return;
+    if (!recipientKey) {
+      console.error("Recipient public key not available");
+      return;
+    }
 
     try {
       const senderPublicKey = await CryptoService.importPublicKey(
         currentUser.public_key,
       );
-      const receiverPublicKey = await CryptoService.importPublicKey(
-        recipientKey,
-      );
+      const receiverPublicKey =
+        await CryptoService.importPublicKey(recipientKey);
 
-      await MessageService.send({
+      const encrypted = await prepareEncryptedMessage(
         text,
         receiverPublicKey,
         senderPublicKey,
-        receiverId: selectedUser.id,
-        token: accessToken,
-      });
+      );
 
-      const newMessage: ChatMessage = {
-        id: `m${Date.now()}`,
-        senderId: currentUser.id,
-        receiverId: selectedUser.id,
-        text,
-        createdAt: new Date().toISOString(),
+      const payload = {
+        receiver_id: selectedUser.id,
+        ciphertext: encrypted.ciphertext,
+        iv: encrypted.iv,
+        encrypted_key: EncodingService.arrayBufferToBase64(
+          encrypted.encryptedKey,
+        ),
+        encrypted_key_for_self: EncodingService.arrayBufferToBase64(
+          encrypted.encryptedKeyForSelf,
+        ),
       };
 
-      setMessages((prev) => [...prev, newMessage]);
+      const sentRealtime = socketRef.current?.sendMessage(payload) ?? false;
+
+      if (!sentRealtime) {
+        await MessageService.send({
+          text,
+          receiverPublicKey,
+          senderPublicKey,
+          receiverId: selectedUser.id,
+          token: accessToken,
+        });
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m${Date.now()}`,
+          senderId: currentUser.id,
+          receiverId: selectedUser.id,
+          text,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -201,6 +390,7 @@ export const useMessages = () => {
     selectedUser,
     conversation,
     isLoading,
+    isSearchingUsers,
     selectUser,
     addContact,
     sendMessage,

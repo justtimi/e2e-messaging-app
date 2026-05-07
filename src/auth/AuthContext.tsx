@@ -11,6 +11,7 @@ type AuthUser = {
   public_key: string;
   wrapped_private_key: string;
   pbkdf2_salt: string;
+  created_at: string;
 };
 
 type AuthContextType = {
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = async (username: string, password: string) => {
-    const res = await loginApi({ username, password });
+    const res = await loginApi({ username: username.trim(), password });
 
     const { user, access_token, refresh_token } = res;
 

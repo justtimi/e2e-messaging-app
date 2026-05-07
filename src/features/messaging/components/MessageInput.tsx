@@ -19,7 +19,7 @@ const MessageInput = ({ onSend, disabled = false }: MessageInputProps) => {
 
   return (
     <form
-      className="flex gap-2 border-t border-gray-200 px-4 py-3"
+      className="flex shrink-0 gap-2 border-t border-gray-200 bg-white px-3 py-3 dark:border-gray-800 dark:bg-gray-950 sm:px-4"
       onSubmit={handleSend}
     >
       <Input
@@ -28,9 +28,13 @@ const MessageInput = ({ onSend, disabled = false }: MessageInputProps) => {
         onChange={(event) => setText(event.target.value)}
         disabled={disabled}
         aria-label="Enter a new message"
-        className="flex-1"
+        className="min-w-0 flex-1"
       />
-      <Button type="submit" disabled={disabled || !text.trim()}>
+      <Button
+        type="submit"
+        disabled={disabled || !text.trim()}
+        className="shrink-0"
+      >
         Send
       </Button>
     </form>

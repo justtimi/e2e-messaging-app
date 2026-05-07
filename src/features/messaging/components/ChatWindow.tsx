@@ -17,11 +17,11 @@ const ChatWindow = ({
 }: ChatWindowProps) => {
   if (!selectedUser) {
     return (
-      <div className="flex flex-1 items-center justify-center p-6 text-center">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-6 text-center">
         <div className="max-w-md space-y-4">
-          <div className="mx-auto h-16 w-16 rounded-full bg-blue-100 p-4">
+              <div className="mx-auto h-16 w-16 rounded-full bg-gray-100 p-4 dark:bg-gray-900">
             <svg
-              className="h-8 w-8 text-blue-600"
+                className="h-8 w-8 text-gray-700 dark:text-gray-200"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -35,10 +35,10 @@ const ChatWindow = ({
             </svg>
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Select a conversation
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Choose a contact from the sidebar to start a secure, end-to-end
               encrypted conversation.
             </p>
@@ -49,15 +49,17 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="border-b border-gray-200 px-4 py-3">
-        <h2 className="font-semibold text-gray-900">{selectedUser.name}</h2>
-        <p className="text-xs text-gray-500">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-w-0 shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+        <h2 className="truncate font-semibold text-gray-900 dark:text-gray-100">
+          {selectedUser.name}
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {selectedUser.status === "online" ? "Online" : "Offline"}
         </p>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div className="flex min-h-0 flex-1 flex-col space-y-3 overflow-y-auto px-4 py-4">
         {isLoading ? (
           <Loader />
         ) : (

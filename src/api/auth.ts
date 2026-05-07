@@ -25,6 +25,7 @@ export const login = async (payload: {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -50,6 +51,7 @@ export const register = async (payload: {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
     headers: {
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -68,6 +70,7 @@ export const getUsers = async (token: string): Promise<AuthUser[]> => {
   const res = await fetch(`${BASE_URL}/auth/users`, {
     method: "GET",
     headers: {
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
   });
@@ -89,6 +92,7 @@ export const getMe = async (token: string): Promise<AuthUser> => {
   const res = await fetch(`${BASE_URL}/auth/me`, {
     method: "GET",
     headers: {
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
     },
   });
@@ -103,6 +107,7 @@ export const refreshToken = async (refresh_token: string) => {
   const res = await fetch(`${BASE_URL}/auth/refresh`, {
     method: "POST",
     headers: {
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ refresh_token }),
@@ -118,6 +123,7 @@ export const logout = async (token: string, refresh_token: string) => {
   const res = await fetch(`${BASE_URL}/auth/logout`, {
     method: "POST",
     headers: {
+      Accept: "application/json",
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },

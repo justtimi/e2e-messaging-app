@@ -1,4 +1,5 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Register";
 import Chat from "./pages/Chat";
@@ -8,6 +9,14 @@ import { ToastProvider } from "./components/Toast";
 import ToastContainer from "./components/ToastContainer";
 
 const App = () => {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+
+    document.documentElement.classList.toggle("dark", shouldUseDark);
+  }, []);
+
   return (
     <ToastProvider>
       <BrowserRouter>

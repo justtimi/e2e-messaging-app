@@ -27,7 +27,8 @@ export const prepareEncryptedMessage = async (
 };
 
 export const decryptReceivedMessage = async (
-  messageJSON: string,
+  ciphertext: string,
+  iv: string,
   encryptedKey: ArrayBuffer,
   receiverPrivateKey: CryptoKey,
 ) => {
@@ -36,5 +37,8 @@ export const decryptReceivedMessage = async (
     receiverPrivateKey,
   );
 
-  return await EncryptionService.decryptMessage(messageJSON, aesKey);
+  return await EncryptionService.decryptMessage(
+    JSON.stringify({ ciphertext, iv }),
+    aesKey,
+  );
 };
