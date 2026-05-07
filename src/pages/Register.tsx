@@ -56,21 +56,17 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      // 1. generate RSA keypair
       const keyPair = await CryptoService.generateKeyPair();
 
       const publicKey = await CryptoService.exportPublicKey(keyPair);
 
-      // 2. generate salt for PBKDF2
       const salt = crypto.getRandomValues(new Uint8Array(16));
 
-      // 3. derive wrapping key from password and salt
       const wrappingKey = await KeyWrappingService.deriveWrappingKey(
         password,
         salt.buffer,
       );
 
-      // 4. wrap private key with AES-KW
       const wrappedPrivateKey = await KeyWrappingService.wrapPrivateKey(
         keyPair.privateKey,
         wrappingKey,

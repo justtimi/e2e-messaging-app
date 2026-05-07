@@ -185,7 +185,7 @@ const Chat = () => {
               onSelect={(userId) => {
                 selectUser(userId);
                 setSearchQuery("");
-                setIsMobileMenuOpen(false); // Close mobile menu after selection
+                setIsMobileMenuOpen(false); 
                 setIsSearchOpen(false);
               }}
             />

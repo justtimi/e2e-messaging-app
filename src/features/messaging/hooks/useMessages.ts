@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthContext } from "../../../auth/AuthContext";
 import { getUsers } from "../../../api/auth";
+import { sendMessage as sendEncryptedMessage } from "../../../api/messages";
 import { getUserPublicKey, searchUsers } from "../../../api/users";
 import { MessageService } from "../services/messagingService";
 import { CryptoService } from "../../../crypto/e2ee/keyManagement";
@@ -42,7 +43,7 @@ const convertAuthUserToChatUser = (authUser: AuthUser): ChatUser => {
   return {
     id: authUser.id,
     name: authUser.display_name || authUser.username,
-    status: "online" as const, // For now, assume all users are online
+    status: "online" as const, 
     lastMessage: "Start a conversation",
     avatarColor: getAvatarColor(authUser.username),
   };
@@ -60,7 +61,6 @@ export const useMessages = () => {
   const [isLoading, setIsLoading] = useState(true);
   const socketRef = useRef<WhisperSocket | null>(null);
 
-  // Fetch users from API
   useEffect(() => {
     const fetchUsers = async () => {
       if (!accessToken || !currentUser) return;
@@ -74,7 +74,6 @@ export const useMessages = () => {
           .filter((user) => user.id !== currentUser.id)
           .map((user) => convertAuthUserToChatUser(user));
 
-        // Select first user if available
         if (chatUsers.length > 0 && !selectedUserId) {
           setSelectedUserId(chatUsers[0].id);
         }
@@ -298,7 +297,6 @@ export const useMessages = () => {
         currentUser.id,
       );
 
-      // Only update if there are messages from the server
       if (decryptedMessages.length > 0) {
         setMessages(
           decryptedMessages.map((msg) => ({
@@ -310,7 +308,6 @@ export const useMessages = () => {
           })),
         );
       }
-      // If no messages from server (405 fallback), keep local messages intact
     } catch (error) {
       console.error("Failed to load messages:", error);
     }
@@ -358,28 +355,34 @@ export const useMessages = () => {
         ),
       };
 
-      const sentRealtime = socketRef.current?.sendMessage(payload) ?? false;
-
-      if (!sentRealtime) {
-        await MessageService.send({
-          text,
-          receiverPublicKey,
-          senderPublicKey,
-          receiverId: selectedUser.id,
-          token: accessToken,
-        });
-      }
+      const optimisticId = `m${Date.now()}`;
 
       setMessages((prev) => [
         ...prev,
         {
-          id: `m${Date.now()}`,
+          id: optimisticId,
           senderId: currentUser.id,
           receiverId: selectedUser.id,
           text,
           createdAt: new Date().toISOString(),
         },
       ]);
+
+      const savedMessage = await sendEncryptedMessage(payload, accessToken);
+
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === optimisticId
+            ? {
+                ...message,
+                id: savedMessage.id ?? message.id,
+                senderId: savedMessage.sender_id ?? message.senderId,
+                receiverId: savedMessage.receiver_id ?? message.receiverId,
+                createdAt: savedMessage.created_at ?? message.createdAt,
+              }
+            : message,
+        ),
+      );
     } catch (error) {
       console.error("Failed to send message:", error);
     }

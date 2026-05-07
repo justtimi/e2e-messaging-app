@@ -34,7 +34,6 @@ const wrapPrivateKey = async (
     rawPrivateKey,
   );
 
-  // Combine IV and encrypted data
   const result = new Uint8Array(iv.length + encrypted.byteLength);
   result.set(iv);
   result.set(new Uint8Array(encrypted), iv.length);
@@ -46,7 +45,6 @@ const unwrapPrivateKey = async (
   wrappedKey: ArrayBuffer,
   wrappingKey: CryptoKey,
 ) => {
-  console.log("🔓 unwrapPrivateKey called");
   console.log("Wrapped key length:", wrappedKey.byteLength);
 
   const data = new Uint8Array(wrappedKey);

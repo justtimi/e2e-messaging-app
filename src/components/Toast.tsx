@@ -31,7 +31,6 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, message }]);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
       removeToast(id);
     }, 5000);

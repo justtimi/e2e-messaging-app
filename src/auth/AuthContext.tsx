@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const cryptoReady = !!privateKey;
 
-  // 🧠 STEP 1: restore session on refresh
   const initializeAuth = async () => {
     setAuthLoading(true);
     const token = localStorage.getItem("access_token");
@@ -74,7 +73,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(user);
     setAccessToken(access_token);
 
-    // 🔐 check stored private key
     let storedPrivateKey = await getPrivateKey(user.id);
 
     if (!storedPrivateKey) {
@@ -115,7 +113,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setPrivateKey(storedPrivateKey);
   };
 
-  // 🚪 LOGOUT
   const logout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
