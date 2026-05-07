@@ -1,4 +1,4 @@
-const BASE_URL = "https://whisperbox.koyeb.app";
+import { API_BASE_URL } from "./config";
 
 export type Message = {
   id: string;
@@ -21,7 +21,7 @@ export const sendMessage = async (
   },
   token: string,
 ) => {
-  const res = await fetch(`${BASE_URL}/messages`, {
+  const res = await fetch(`${API_BASE_URL}/messages`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -37,7 +37,7 @@ export const sendMessage = async (
 };
 
 export const getConversations = async (token: string) => {
-  const res = await fetch(`${BASE_URL}/conversations`, {
+  const res = await fetch(`${API_BASE_URL}/conversations`, {
     headers: {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
@@ -55,7 +55,7 @@ export const getConversationMessages = async (
   before?: string,
 ) => {
   const url = new URL(
-    `${BASE_URL}/conversations/${userId}/messages`,
+    `${API_BASE_URL}/conversations/${userId}/messages`,
   );
 
   if (before) url.searchParams.append("before", before);

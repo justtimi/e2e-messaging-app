@@ -16,13 +16,13 @@ type AuthResponse = {
   user: AuthUser;
 };
 
-const BASE_URL = "https://whisperbox.koyeb.app";
+import { API_BASE_URL } from "./config";
 
 export const login = async (payload: {
   username: string;
   password: string;
 }): Promise<AuthResponse> => {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -48,7 +48,7 @@ export const register = async (payload: {
   wrapped_private_key: string;
   pbkdf2_salt: string;
 }): Promise<AuthResponse> => {
-  const res = await fetch(`${BASE_URL}/auth/register`, {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -67,7 +67,7 @@ export const register = async (payload: {
 };
 
 export const getUsers = async (token: string): Promise<AuthUser[]> => {
-  const res = await fetch(`${BASE_URL}/auth/users`, {
+  const res = await fetch(`${API_BASE_URL}/auth/users`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -89,7 +89,7 @@ export const getUsers = async (token: string): Promise<AuthUser[]> => {
 };
 
 export const getMe = async (token: string): Promise<AuthUser> => {
-  const res = await fetch(`${BASE_URL}/auth/me`, {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -104,7 +104,7 @@ export const getMe = async (token: string): Promise<AuthUser> => {
   return res.json();
 };
 export const refreshToken = async (refresh_token: string) => {
-  const res = await fetch(`${BASE_URL}/auth/refresh`, {
+  const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -120,7 +120,7 @@ export const refreshToken = async (refresh_token: string) => {
   return res.json();
 };
 export const logout = async (token: string, refresh_token: string) => {
-  const res = await fetch(`${BASE_URL}/auth/logout`, {
+  const res = await fetch(`${API_BASE_URL}/auth/logout`, {
     method: "POST",
     headers: {
       Accept: "application/json",

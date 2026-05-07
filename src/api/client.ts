@@ -25,6 +25,8 @@ type MessageReceivePayload = {
   payload: IncomingMessage;
 };
 
+import { WS_BASE_URL } from "./config";
+
 export class WhisperSocket {
   private socket: WebSocket | null = null;
   private token: string;
@@ -42,9 +44,7 @@ export class WhisperSocket {
   }
 
   connect() {
-    this.socket = new WebSocket(
-      `wss://whisperbox.koyeb.app/ws?token=${this.token}`,
-    );
+    this.socket = new WebSocket(`${WS_BASE_URL}/ws?token=${this.token}`);
 
     this.socket.onopen = () => {
       console.log("WhisperSocket connected");

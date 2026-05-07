@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://whisperbox.koyeb.app/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

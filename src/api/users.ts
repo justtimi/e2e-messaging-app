@@ -1,4 +1,4 @@
-const BASE_URL = "https://whisperbox.koyeb.app";
+import { API_BASE_URL } from "./config";
 
 export type PublicKeyResponse = {
   public_key: string;
@@ -15,7 +15,7 @@ export const searchUsers = async (
   token: string,
 ): Promise<SearchUser[]> => {
   const res = await fetch(
-    `${BASE_URL}/users/search?q=${encodeURIComponent(query)}`,
+    `${API_BASE_URL}/users/search?q=${encodeURIComponent(query)}`,
     {
       headers: {
         Accept: "application/json",
@@ -33,7 +33,7 @@ export const getUserPublicKey = async (
   userId: string,
   token: string,
 ): Promise<PublicKeyResponse> => {
-  const res = await fetch(`${BASE_URL}/users/${userId}/public-key`, {
+  const res = await fetch(`${API_BASE_URL}/users/${userId}/public-key`, {
     headers: {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
